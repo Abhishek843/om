@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Background Image Example</title>
+    <style>
+        body {  
+            background-image: url('https://images.alphacoders.com/131/1318300.png');            
+            background-size: cover;
+            background-position: center;
+            background-color: #f1f1f1;
+        }
+        .form-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+        }
+        .form-container h2 {
+            text-align: center;
+        }
+        .form-container .form-group {
+            margin-bottom: 15px;
+        }
+        .form-container label {
+            display: block;
+            font-weight: bold;
+        }
+        .form-container input[type="text"],
+        .form-container input[type="email"],
+        .form-container input[type="tel"],
+        .form-container input[type="date"],
+        .form-container input[type="time"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .form-container input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .form-container input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        /* Style for the details display section */
+        .details-container {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Book a Slot</h2>
+        <p>Book a call and our representative will call you within 1 hour</p>
+        <form action="#" method="post" onsubmit="handleSubmit(event)">
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone:</label>
+                <input type="tel" id="phone" name="phone" required>
+            </div>
+            <div class="form-group">
+                <label for="date">Date:</label>
+                <input type="date" id="date" name="date" required>
+            </div>
+            <div class="form-group">
+                <label for="time">Time:</label>
+                <input type="time" id="time" name="time" required>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Submit">
+            </div>
+        </form>
+    </div>
+
+    <div class="user-details-container">
+        <!-- Display user details here -->
+    </div>
+
+    <script>
+        function handleSubmit(event) {
+            event.preventDefault();  
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+
+            // Store user details in local storage
+            const userDetails = {
+                name: name,
+                email: email,
+                phone: phone,
+                date: date,
+                time: time
+            };
+
+            let userArray = JSON.parse(localStorage.getItem('userDetailsArray')) || [];
+            userArray.push(userDetails);
+            localStorage.setItem('userDetailsArray', JSON.stringify(userArray));
+
+            // Display user details
+            displayUserDetails();
+        }
+
+        function displayUserDetails() {
+            const userDetailsContainer = document.querySelector('.user-details-container');
+            userDetailsContainer.innerHTML = '';
+
+            const userArray = JSON.parse(localStorage.getItem('userDetailsArray')) || [];
+
+            userArray.forEach((user, index) => {
+                const userDetailsDiv = document.createElement('div');
+                userDetailsDiv.classList.add('user-details');
+                userDetailsDiv.innerHTML = `
+                    <p><strong>Name:</strong> ${user.name}</p>
+                    <p><strong>Email:</strong> ${user.email}</p>
+                    <p><strong>Phone:</strong> ${user.phone}</p>
+                    <p><strong>Date:</strong> ${user.date}</p>
+                    <p><strong>Time:</strong> ${user.time}</p>
+                    <button class="delete-btn" data-index="${index}">Delete</button>
+                    <hr>
+                `;
+                userDetailsContainer.appendChild(userDetailsDiv);
+            });
+
+            // Attach event listeners to delete buttons
+            const deleteButtons = document.querySelectorAll('.delete-btn');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', handleDelete);
+            });
+        }
+
+        function handleDelete(event) {
+            const index = event.target.getAttribute('data-index');
+            let userArray = JSON.parse(localStorage.getItem('userDetailsArray')) || [];
+
+            if (index !== null) {
+                userArray.splice(index, 1);
+                localStorage.setItem('userDetailsArray', JSON.stringify(userArray));
+                displayUserDetails();
+            }
+        }
+
+        // Display existing user details when the page loads
+        displayUserDetails();
+    </script>
+</body>
+</html>

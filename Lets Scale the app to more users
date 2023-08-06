@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Background Image Example</title>
+    <style>
+        body {  
+            background-image: url('https://images.alphacoders.com/131/1318300.png');            
+            background-size: cover;
+            background-position: center;
+            background-color: #f1f1f1;
+        }
+        .form-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+        }
+        .form-container h2 {
+            text-align: center;
+        }
+        .form-container .form-group {
+            margin-bottom: 15px;
+        }
+        .form-container label {
+            display: block;
+            font-weight: bold;
+        }
+        .form-container input[type="text"],
+        .form-container input[type="email"],
+        .form-container input[type="tel"],
+        .form-container input[type="date"],
+        .form-container input[type="time"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .form-container input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .form-container input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        /* Style for the details display section */
+        .details-container {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Book a Slot</h2>
+        <p>Book a call and our representative will call you within 1 hour</p>
+        <form action="#" method="post" onsubmit="handleSubmit(event)">
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone:</label>
+                <input type="tel" id="phone" name="phone" required>
+            </div>
+            <div class="form-group">
+                <label for="date">Date:</label>
+                <input type="date" id="date" name="date" required>
+            </div>
+            <div class="form-group">
+                <label for="time">Time:</label>
+                <input type="time" id="time" name="time" required>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Submit">
+            </div>
+        </form>
+    </div>
+
+    <!-- Section to display the entered details -->
+    <div class="details-container" id="detailsSection" style="display: none;">
+        <h2>Entered Details</h2>
+        <p><strong>Name:</strong> <span id="displayName"></span></p>
+        <p><strong>Email:</strong> <span id="displayEmail"></span></p>
+        <p><strong>Phone:</strong> <span id="displayPhone"></span></p>
+        <p><strong>Date:</strong> <span id="displayDate"></span></p>
+        <p><strong>Time:</strong> <span id="displayTime"></span></p>
+    </div>
+
+    <script>
+        function handleSubmit(event) {
+            event.preventDefault();  
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+
+            document.getElementById('displayName').innerText = name;
+            document.getElementById('displayEmail').innerText = email;
+            document.getElementById('displayPhone').innerText = phone;
+            document.getElementById('displayDate').innerText = date;
+            document.getElementById('displayTime').innerText = time;
+
+            document.getElementById('detailsSection').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

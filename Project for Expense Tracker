@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Expense Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <style>
+        body {  
+            background-image: url('https://images.alphacoders.com/131/1318300.png');            
+            background-size: cover;
+            background-position: center;
+            background-color: #f1f1f1;
+        }
+        .form-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+        }
+        .form-container h2 {
+            text-align: center;
+        }
+        .form-container .form-group {
+            margin-bottom: 15px;
+        }
+        .form-container label {
+            display: block;
+            font-weight: bold;
+        }
+        .form-container input[type="text"],
+        .form-container input[type="email"],
+        .form-container select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .form-container input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .form-container input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        /* Style for the details display section */
+        .details-container {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Add an Expense</h2>
+        <form action="#" method="post" onsubmit="handleSubmit(event)">
+            <div class="form-group">
+                <label for="expenseAmount">Choose Expense Amount:</label>
+                <input type="text" id="expenseAmount" name="expenseAmount" required>
+            </div>
+            <div class="form-group">
+                <label for="expenseDescription">Choose Description:</label>
+                <input type="text" id="expenseDescription" name="expenseDescription" required>
+            </div>
+            <div class="form-group">
+                <label for="expenseCategory">Choose a Category:</label>
+                <select id="expenseCategory" name="expenseCategory" required>
+                    <option value="" disabled selected>Select a category</option>
+                    <option value="groceries">Groceries</option>
+                    <option value="utilities">Utilities</option>
+                    <option value="entertainment">Entertainment</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Add Expense">
+            </div>
+        </form>
+    </div>
+
+    <div class="user-details-container">
+        <!-- Display user details here -->
+    </div>
+
+    <script>
+        function handleSubmit(event) {
+            event.preventDefault();  
+            const expenseAmount = document.getElementById('expenseAmount').value;
+            const expenseDescription = document.getElementById('expenseDescription').value;
+            const expenseCategory = document.getElementById('expenseCategory').value;
+
+            // Store user details in local storage
+            const expenseDetails = {
+                expenseAmount: expenseAmount,
+                expenseDescription: expenseDescription,
+                expenseCategory: expenseCategory
+            };
+
+            let expenseArray = JSON.parse(localStorage.getItem('expenseDetailsArray')) || [];
+            expenseArray.push(expenseDetails);
+            localStorage.setItem('expenseDetailsArray', JSON.stringify(expenseArray));
+
+            // Display user details
+            displayExpenseDetails();
+        }
+
+        function displayExpenseDetails() {
+            const userDetailsContainer = document.querySelector('.user-details-container');
+            userDetailsContainer.innerHTML = '';
+
+            const expenseArray = JSON.parse(localStorage.getItem('expenseDetailsArray')) || [];
+
+            expenseArray.forEach((expense, index) => {
+                const expenseDetailsDiv = document.createElement('div');
+                expenseDetailsDiv.classList.add('expense-details');
+                expenseDetailsDiv.innerHTML = `
+                    <p><strong>Amount:</strong> ${expense.expenseAmount}</p>
+                    <p><strong>Description:</strong> ${expense.expenseDescription}</p>
+                    <p><strong>Category:</strong> ${expense.expenseCategory}</p>
+                    <button class="edit-btn" data-index="${index}">Edit</button>
+                    <button class="delete-btn" data-index="${index}">Delete</button>
+                    <hr>
+                `;
+                userDetailsContainer.appendChild(expenseDetailsDiv);
+            });
+
+            // Attach event listeners to edit and delete buttons
+            const editButtons = document.querySelectorAll('.edit-btn');
+            editButtons.forEach(button => {
+                button.addEventListener('click', handleEdit);
+            });
+
+            const deleteButtons = document.querySelectorAll('.delete-btn');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', handleDelete);
+            });
+        }
+
+        function handleEdit(event) {
+            const index = event.target.getAttribute('data-index');
+            const expenseArray = JSON.parse(localStorage.getItem('expenseDetailsArray')) || [];
+            const expense = expenseArray[index];
+
+            // Fill the form with the user's details
+            document.getElementById('expenseAmount').value = expense.expenseAmount;
+            document.getElementById('expenseDescription').value = expense.expenseDescription;
+            document.getElementById('expenseCategory').value = expense.expenseCategory;
+        }
+
+        function handleDelete(event) {
+            const index = event.target.getAttribute('data-index');
+            let expenseArray = JSON.parse(localStorage.getItem('expenseDetailsArray')) || [];
+
+            if (index !== null) {
+                expenseArray.splice(index, 1);
+                localStorage.setItem('expenseDetailsArray', JSON.stringify(expenseArray));
+                displayExpenseDetails();
+            }
+        }
+
+        // Display existing expense details when the page loads
+        displayExpenseDetails();
+    </script>
+</body>
+</html>

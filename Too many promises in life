@@ -1,0 +1,47 @@
+function updateLastUserActivityTime() {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            const lastActivityTime = new Date();
+            resolve(lastActivityTime);
+        }, 1000);
+    });
+}
+
+function createPost(postData) {
+    return new Promise(resolve => {
+        // Simulate post creation
+        setTimeout(() => {
+            const newPost = { ...postData };
+            resolve(newPost);
+        }, 2000);
+    });
+}
+
+function deleteLastPost() {
+    return new Promise(resolve => {
+        // Simulate post deletion
+        setTimeout(() => {
+            resolve();
+        }, 1000);
+    });
+}
+
+const userData = {
+    id: 123,
+    name: 'John Doe',
+};
+
+Promise.all([createPost({ title: 'Post 1', userId: userData.id }), updateLastUserActivityTime()])
+    .then(([newPost, lastActivityTime]) => {
+        console.log('New Post:', newPost);
+        console.log('Last Activity Time:', lastActivityTime);
+
+        return deleteLastPost();
+    })
+    .then(() => {
+        console.log('Last post deleted successfully.');
+        // Log the new set of posts here
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });

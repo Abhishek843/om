@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Background Image Example</title>
+    <style>
+        body {  
+            background-image: url('https://images.alphacoders.com/131/1318300.png');            
+            background-size: cover;
+            background-position: center;
+            background-color: #f1f1f1;
+        }
+        .form-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+        }
+        .form-container h2 {
+            text-align: center;
+        }
+        .form-container .form-group {
+            margin-bottom: 15px;
+        }
+        .form-container label {
+            display: block;
+            font-weight: bold;
+        }
+        .form-container input[type="text"],
+        .form-container input[type="email"],
+        .form-container input[type="tel"],
+        .form-container input[type="date"],
+        .form-container input[type="time"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .form-container input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .form-container input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Book a Slot</h2>
+        <p>Book a call and our representative will call you within 1 hour</p>
+        <form action="#" method="post" onsubmit="handleSubmit(event)">
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone:</label>
+                <input type="tel" id="phone" name="phone" required>
+            </div>
+            <div class="form-group">
+                <label for="date">Date:</label>
+                <input type="date" id="date" name="date" required>
+            </div>
+            <div class="form-group">
+                <label for="time">Time:</label>
+                <input type="time" id="time" name="time" required>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Submit">
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+   <script>
+        window.addEventListener("DOMContentLoaded", () => {
+            axios.get("https://crudcrud.com/api/8382c20b5ff2471e87b64173")
+                .then(response => {
+                    console.log(response.data);
+                    for (var i = 0; i < response.data.length; i++) {
+                        showNewUserOnScreen(response.data[i]);
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        });
+
+        function showNewUserOnScreen(userData) {
+            const userContainer = document.querySelector('.user-container');
+
+            const userDiv = document.createElement('div');
+            userDiv.classList.add('user-info');
+            userDiv.innerHTML = `
+                <p><strong>Name:</strong> ${userData.name}</p>
+                <p><strong>Email:</strong> ${userData.email}</p>
+                <p><strong>Phone:</strong> ${userData.phone}</p>
+                <p><strong>Date:</strong> ${userData.date}</p>
+                <p><strong>Time:</strong> ${userData.time}</p>
+                <span class="edit-icon" data-user='${JSON.stringify(userData)}' onclick="editUser(this)">✏️</span>
+                <span class="delete-icon" data-id="${userData._id}" onclick="deleteUser(this)">🗑️</span>
+                <hr>
+            `;
+
+            userContainer.appendChild(userDiv);
+        }
+
+        function editUser(editIcon) {
+            const user = JSON.parse(editIcon.getAttribute('data-user'));
+            const editForm = document.getElementById('editForm');
+
+            // Populate the edit form with user details
+            editForm.innerHTML = `
+                <input type="text" id="editName" value="${user.name}" required>
+                <input type="email" id="editEmail" value="${user.email}" required>
+                <input type="tel" id="editPhone" value="${user.phone}" required>
+                <input type="date" id="editDate" value="${user.date}" required>
+                <input type="time" id="editTime" value="${user.time}" required>
+                <button type="button" onclick="submitEditForm('${user._id}')">Save</button>
+            `;
+
+            editForm.style.display = 'block';
+        }
+
+        function submitEditForm(userId) {
+            const editForm = document.getElementById('editForm');
+            const name = document.getElementById('editName').value;
+            const email = document.getElementById('editEmail').value;
+            const phone = document.getElementById('editPhone').value;
+            const date = document.getElementById('editDate').value;
+            const time = document.getElementById('editTime').value;
+
+            const userDetails = {
+                name: name,
+                email: email,
+                phone: phone,
+                date: date,
+                time: time
+            };
+
+            axios.put(`https://crudcrud.com/api/8382c20b5ff2471e87b64173/${userId}`, userDetails)
+                .then(response => {
+                    console.log('User details edited:', response.data);
+                    // Update the webpage with edited user details
+                    const userDiv = editForm.previousElementSibling;
+                    userDiv.innerHTML = `
+                        <p><strong>Name:</strong> ${name}</p>
+                        <p><strong>Email:</strong> ${email}</p>
+                        <p><strong>Phone:</strong> ${phone}</p>
+                        <p><strong>Date:</strong> ${date}</p>
+                        <p><strong>Time:</strong> ${time}</p>
+                        <span class="edit-icon" data-user='${JSON.stringify(userDetails)}' onclick="editUser(this)">✏️</span>
+                        <span class="delete-icon" data-id="${userId}" onclick="deleteUser(this)">🗑️</span>
+                        <hr>
+                    `;
+                    editForm.style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error editing user details:', error);
+                });
+        }
+
+        function deleteUser(deleteIcon) {
+            // Your delete function here
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Background Image Example</title>
+    <style>
+        body {
+            background-image: url('https://images.alphacoders.com/131/1318300.png');
+            background-size: cover;
+            background-position: center;
+            background-color: #f1f1f1;
+        }
+        .user-container {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+        }
+        .user-info {
+            margin-bottom: 10px;
+        }
+        .delete-icon {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="user-container">
+        <h2>Booked Users</h2>
+        <!-- User data will be displayed here -->
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        window.addEventListener("DOMContentLoaded", () => {
+            axios.get("https://crudcrud.com/api/8382c20b5ff2471e87b64173")
+                .then(response => {
+                    console.log(response.data);
+                    for (var i = 0; i < response.data.length; i++) {
+                        showNewUserOnScreen(response.data[i]);
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        });
+
+        function showNewUserOnScreen(userData) {
+            const userContainer = document.querySelector('.user-container');
+
+            const userDiv = document.createElement('div');
+            userDiv.classList.add('user-info');
+            userDiv.innerHTML = `
+                <p><strong>Name:</strong> ${userData.name}</p>
+                <p><strong>Email:</strong> ${userData.email}</p>
+                <p><strong>Phone:</strong> ${userData.phone}</p>
+                <p><strong>Date:</strong> ${userData.date}</p>
+                <p><strong>Time:</strong> ${userData.time}</p>
+                <span class="delete-icon" data-id="${userData._id}" onclick="deleteUser(this)">🗑️</span>
+                <hr>
+            `;
+
+            userContainer.appendChild(userDiv);
+        }
+
+        function deleteUser(deleteIcon) {
+            const userId = deleteIcon.getAttribute('data-id');
+
+            axios.delete(`https://crudcrud.com/api/8382c20b5ff2471e87b64173/${userId}`)
+                .then(response => {
+                    console.log('User deleted:', response.data);
+                    const userDiv = deleteIcon.parentElement;
+                    userDiv.remove();
+                })
+                .catch(error => {
+                    console.error('Error deleting user:', error);
+                });
+        }
+    </script>
+</body>
+</html>

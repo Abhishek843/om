@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Restaurant Order Management</title>
+    <style>
+        /* Add your CSS styling here */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f1f1f1;
+        }
+
+        .form-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Place an Order</h2>
+        <form action="#" method="post" onsubmit="submitOrder(event)">
+            <div class="form-group">
+                <label for="table">Table:</label>
+                <select id="table" name="table">
+                    <option value="1">Table 1</option>
+                    <option value="2">Table 2</option>
+                    <option value="3">Table 3</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="dish">Dish:</label>
+                <select id="dish" name="dish">
+                    <option value="Chicken Biryani">Chicken Biryani</option>
+                    <option value="Fried Rice">Fried Rice</option>
+                    <option value="RicePlates">RicePlates</option>
+                    <option value="Riceballs">Riceballs</option>
+                    <option value="Meatballs">Meatballs</option>
+                    <option value="Meat">Meat</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="price">Price (in Rupees):</label>
+                <input type="number" id="price" name="price" required>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Add Order">
+            </div>
+        </form>
+    </div>
+
+    <div class="order-container">
+        <h2>Orders</h2>
+        <div class="table" id="table1">
+            <h3>Table 1</h3>
+            <ul id="orders-table1">
+            </ul>
+        </div>
+        <div class="table" id="table2">
+            <h3>Table 2</h3>
+            <ul id="orders-table2">
+            </ul>
+        </div>
+        <div class="table" id="table3">
+            <h3>Table 3</h3>
+            <ul id="orders-table3">
+            </ul>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        function saveOrdersToLocalStorage() {
+            for (let table = 1; table <= 3; table++) {
+                const orderList = document.getElementById(`orders-table${table}`);
+                const orders = [];
+                const items = orderList.getElementsByTagName('li');
+                for (let i = 0; i < items.length; i++) {
+                    const text = items[i].textContent;
+                    const orderId = items[i].getAttribute('data-order-id');
+                    orders.push({ text, orderId });
+                }
+                localStorage.setItem(`table${table}`, JSON.stringify(orders));
+            }
+        }
+
+        function loadOrdersFromLocalStorage() {
+            for (let table = 1; table <= 3; table++) {
+                const orderList = document.getElementById(`orders-table${table}`);
+                const ordersData = JSON.parse(localStorage.getItem(`table${table}`)) || [];
+                ordersData.forEach(orderData => {
+                    const listItem = document.createElement('li');
+                    listItem.setAttribute('data-order-id', orderData.orderId);
+                    listItem.innerHTML = `${orderData.text} <button onclick="deleteOrder('${orderData.orderId}', ${table})">Delete</button>`;
+                    orderList.appendChild(listItem);
+                });
+            }
+        }
+
+        function submitOrder(event) {
+            event.preventDefault();
+
+            const table = document.getElementById('table').value;
+            const dish = document.getElementById('dish').value;
+            const price = document.getElementById('price').value;
+
+            const order = {
+                table: table,
+                dish: dish,
+                price: price
+            };
+
+            axios.post('https://crudcrud.com/api/1af3ed1229e343409f6b0bb9000f9208/tables', order)
+                .then(response => {
+                    console.log('Order placed successfully:', response.data);
+
+                    const orderList = document.getElementById(`orders-table${table}`);
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `${dish} - ${price} Rupees <button onclick="deleteOrder('${response.data._id}', ${table})">Delete</button>`;
+                    orderList.appendChild(listItem);
+
+                    saveOrdersToLocalStorage();
+                })
+                .catch(error => {
+                    console.error('Error placing order:', error);
+                });
+
+            document.getElementById('table').value = '';
+            document.getElementById('dish').value = '';
+            document.getElementById('price').value = '';
+        }
+
+        function deleteOrder(orderId, table) {
+            const listItem = document.querySelector(`#orders-table${table} li[data-order-id="${orderId}"]`);
+            if (listItem) {
+                listItem.remove();
+                saveOrdersToLocalStorage();
+            }
+
+            axios.delete(`https://crudcrud.com/api/1af3ed1229e343409f6b0bb9000f9208/tables/${orderId}`)
+                .then(response => {
+                    console.log('Order deleted successfully:', response.data);
+                })
+                .catch(error => {
+                    console.error('Error deleting order:', error);
+                });
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            loadOrdersFromLocalStorage();
+        });
+    </script>
+</body>
+</html>

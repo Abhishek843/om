@@ -1,0 +1,16 @@
+const multiply = (num1, num2) => {
+  return num1 * num2;
+};
+const result = multiply(5, 7);  
+console.log(result);
+
+const student = {
+  name: "John Doe",
+  age: 20,
+  grade: "A",
+};
+
+
+console.log("Student Name: " + student.name);
+console.log("Student Age: " + student.age);
+console.log("Student Grade: " + student.grade);

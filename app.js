@@ -1,23 +1,60 @@
 const express = require('express');
-const bodyParser = require('body-parser');
-
 const app = express();
-const adminRoutes=require('./routes/admin');
-const shopRoutes=require('./routes/shop');
-// Use bodyParser middleware to parse incoming form data
-app.use(bodyParser.urlencoded({ extended: false }));
+const port = process.env.PORT || 3000;
+const fs = require('fs').promises;
 
-// Route for displaying a form to add a product
-app.use('/admin',shopRoutes);
-app.use(adminRoutes);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));
+
+app.get('/login', (req, res) => {
+  res.sendFile(__dirname + '/public/login.html');
+});
+
+app.post('/login', (req, res) => {
+  const { username } = req.body;
+
+  // Store the username in a session or a database
+  // Example using a simple in-memory object for demonstration:
+  // Replace this with a database or session management.
+  const user = { username };
+
+  // Redirect the user to the chat page
+  res.redirect('/');
+});
 
 
-// Default route
-app.use((req,res,next)=>{
-  res.status(404).send('<h1>Page not found</h1>')
-})
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
 
-// Start the server
-app.listen(3003, () => {
-  console.log('Server is running on port 3000');
+app.post('/send', async (req, res) => {
+  const { username, message } = req.body;
+  try {
+    // Append the message to a file with username
+    await fs.appendFile('chat-history.txt', `${username}: ${message}\n`);
+    res.sendStatus(200);
+  } catch (error) {
+    console.error(error);
+    res.sendStatus(500);
+  }
+});
+
+app.get('/chat-history', async (req, res) => {
+  try {
+    // Read and send chat history
+    const data = await fs.readFile('chat-history.txt', 'utf-8');
+    const messages = data.trim().split('\n').map((line) => {
+      const [username, message] = line.split(': ');
+      return { username, message };
+    });
+    res.json(messages);
+  } catch (error) {
+    console.error(error);
+    res.sendStatus(500);
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });

@@ -1,0 +1,436 @@
+// middleware/auth.js
+const passport = require('passport');
+
+module.exports = (req, res, next) => {
+  passport.authenticate('local', {
+    successRedirect: '/api/expenses',
+    failureRedirect: '/api/login',
+    failureFlash: true,
+  })(req, res, next);
+};
+// controllers/expenseController.js
+const path = require('path');
+
+const Expense = require('../models/expense');
+exports.createExpense = async (req, res) => {
+  console.log('Request Body:', req.body);
+  const { description, amount } = req.body;
+
+  try {
+    // Make sure to get the user from req.user, assuming it's set in a middleware
+    const userId = req.user.id;
+
+    const newExpense = await Expense.create({ description, amount, UserId: userId });
+    res.redirect('/api/expenses');
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+exports.getExpenses = async (req, res) => {
+  try {
+    // Assuming req.user contains the currently logged-in user
+    console.log('User Object:', req.user);  // Add this line for debugging
+
+    const userId = req.user.id;
+    console.log('User ID:', userId);  // Add this line for debugging
+
+    const expenses = await Expense.findAll({ where: { UserId: userId } });
+    res.sendFile(path.join(__dirname, '../views/expenses.html'));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+
+exports.deleteExpense = async (req, res) => {
+  const expenseId = req.params.id;
+
+  try {
+    const expense = await Expense.findByPk(expenseId);
+    if (!expense) {
+      return res.status(404).json({ error: 'Expense not found' });
+    }
+
+    await expense.destroy();
+    res.redirect('/api/expenses');
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+// Get expense by ID for editing
+exports.getExpenseById = async (req, res) => {
+  const expenseId = req.params.id;
+
+  try {
+    const expense = await Expense.findByPk(expenseId);
+    if (!expense) {
+      return res.status(404).json({ error: 'Expense not found' });
+    }
+
+    res.sendFile(path.join(__dirname, '../views/editExpense.html'));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+// Update expense
+// controllers/expenseController.js
+
+// ... (previous code)
+
+// Update expense
+exports.updateExpense = async (req, res) => {
+  console.log(req.method);
+  const expenseId = req.params.id;
+  const { description, amount } = req.body;
+
+  try {
+    const expense = await Expense.findByPk(expenseId);
+    if (!expense) {
+      return res.status(404).json({ error: 'Expense not found' });
+    }
+
+    // Update expense properties
+    expense.description = description;
+    expense.amount = amount;
+
+    // Save the updated expense
+    await expense.save();
+
+    res.redirect('/api/expenses');
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+exports.getRegisterPage = (req, res) => {
+  res.render('register'); // Create a register.ejs view for the registration page
+};
+
+// controllers/userController.js
+const path = require('path');
+const User = require('../models/User');
+const Expense = require('../models/expense');
+const bcrypt = require('bcrypt');
+
+exports.getRegisterPage = (req, res) => {
+  const registerPath = path.join(__dirname, '../views/register.html');
+  res.sendFile(registerPath);
+};
+
+exports.registerUser = async (req, res) => {
+  const { username, email, password } = req.body;
+
+  try {
+    // Hash the password before saving it
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = await User.create({ username, email, password: hashedPassword });
+    
+    // Redirect the user to the login page after successful registration
+    res.redirect('/api/login');
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+exports.getLoginPage = (req, res) => {
+    const loginPath = path.join(__dirname, '../views/login.html');
+    res.sendFile(loginPath);
+  };
+  
+  exports.loginUser = async (req, res) => {
+    const { email, password } = req.body;
+  
+    try {
+      const user = await User.findOne({ where: { email } });
+  
+      if (!user) {
+        // User not found, display message and button to register
+        return res.send(`
+          <p id="errorMessage">User does not exist. <button onclick="redirectToRegister()">Register</button></p>
+          <script>function redirectToRegister() { window.location.href = '/api/register'; }</script>
+        `);
+      }
+  
+      // Check if the password is correct
+      if (user.password !== password) {
+        return res.send('<p id="errorMessage">Incorrect password.</p>');
+      }
+  
+      // Store the user in the session
+      req.session.user = user;
+      // Check if the password is correct
+if (!(await user.validPassword(password))) {
+  req.flash('error', 'Incorrect email or password.');
+  return res.redirect('/api/login');
+}
+
+      // Successful login, redirect to expenses page
+      res.redirect('/api/expenses');
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  };// routes/expenseRoutes.js
+const express = require('express');
+const router = express.Router();
+const expenseController = require('../controllers/expenseController');
+
+router.get('/expenses', expenseController.getExpenses);
+router.post('/expenses', expenseController.createExpense);
+router.delete('/expenses/:id', expenseController.deleteExpense);
+router.get('/expenses/:id/edit', expenseController.getExpenseById);
+router.post('/expenses/:id', expenseController.updateExpense);
+
+module.exports = router;
+// routes/userRoutes.js
+const express = require('express');
+const router = express.Router();
+const userController = require('../controllers/userController');
+const authMiddleware = require('../controllers/auth'); 
+// Register page
+router.get('/register', userController.getRegisterPage);
+router.post('/register', userController.registerUser);
+router.get('/login', userController.getLoginPage);
+router.post('/login', authMiddleware, userController.loginUser);
+
+module.exports = router;
+<!-- editExpense.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Expense</title>
+  <!-- Include any additional styles or scripts here -->
+</head>
+<body>
+  <h1>Edit Expense</h1>
+  <form action="/api/expenses/<%= expense.id %>" method="post">
+    <!-- Use POST method -->
+    <input type="hidden" name="_method" value="put">
+    <label for="description">Description:</label>
+    <input type="text" id="description" name="description" value="<%= expense.description %>" required>
+    <br>
+    <label for="amount">Amount:</label>
+    <input type="text" id="amount" name="amount" value="<%= expense.amount %>" required>
+    <br>
+    <button type="submit">Update Expense</button>
+  </form>
+</body>
+</html>
+<!-- expenses.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense List</title>
+  <!-- Include any additional styles or scripts here -->
+</head>
+<body>
+  <h1>Expense List</h1>
+  <ul>
+    <% expenses.forEach(expense => { %>
+      <li><%= expense.description %> - $<%= expense.amount.toFixed(2) %></li>
+    <% }); %>
+  </ul>
+
+  <form action="/api/expenses" method="post">
+    <!-- Description field for adding expenses -->
+    <label for="description">Description:</label>
+    <input type="text" id="description" name="description" required>
+    <br>
+    <!-- Amount field for adding expenses -->
+    <label for="amount">Amount:</label>
+    <input type="text" id="amount" name="amount" required>
+    <br>
+    <button type="submit">Add Expense</button>
+  </form>
+
+  <!-- Display expenses with "Edit" and "Delete" links -->
+  <ul>
+    <% expenses.forEach(expense => { %>
+      <li>
+        <%= expense.description %> - $<%= expense.amount.toFixed(2) %>
+        <div class="card__actions">
+          <a href="/api/expenses/<%= expense.id %>/edit">Edit</a>
+          <form action="/api/expenses/<%= expense.id %>?_method=DELETE" method="POST">
+            <input type="hidden" name="_method" value="DELETE">
+            <input type="hidden" value="<%= expense.id %>" name="expenseId">
+            <button class="btn" type="submit">Delete</button>
+          </form>
+        </div>
+      </li>
+    <% }); %>
+  </ul>
+</body>
+</html>
+<!-- public/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+</head>
+<body>
+  <h1>Login</h1>
+  <form action="/api/login" method="post">
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required>
+    <br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+    <br>
+    <button type="submit">Login</button>
+  </form>
+  <p id="errorMessage"></p>
+  <button onclick="redirectToRegister()">Register</button>
+
+  <script>
+    function redirectToRegister() {
+      window.location.href = '/api/register';
+    }
+  </script>
+</body>
+</html>
+<!-- public/register.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register</title>
+  <!-- You can include additional stylesheets or scripts here -->
+</head>
+<body>
+  <h1>Register</h1>
+  <form action="/api/register" method="post">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+    <br>
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required>
+    <br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+    <br>
+    <button type="submit">Register</button>
+  </form>
+</body>
+</html>
+// app.js
+const express = require('express'); 
+const methodOverride = require('method-override');
+const Expense = require('./models/expense');
+const User = require('./models/User');
+const flash = require('connect-flash'); 
+
+const bodyParser = require('body-parser');
+const sequelize = require('./data/database');
+const expenseRoutes = require('./routes/expenseRoutes');
+const userRoutes = require('./routes/userRoutes');
+const app = express();
+const PORT = process.env.PORT || 3000;
+const session = require('express-session');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+
+app.use(
+  session({
+    secret: 'your-secret-key', // Change this to a secret key for security
+    resave: false,
+    saveUninitialized: true,
+  })
+);
+
+// Passport initialization
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(flash()); 
+// Assuming you have a local strategy for user authentication
+passport.use(
+  new LocalStrategy(
+    {
+      usernameField: 'email',
+      passwordField: 'password',
+    },
+    async (email, password, done) => {
+      try {
+        const user = await User.findOne({ where: { email } });
+
+        if (!user || !(await user.validPassword(password))) {
+          return done(null, false, { message: 'Incorrect email or password.' });
+        }
+
+        return done(null, user);
+      } catch (error) {
+        return done(error);
+      }
+    }
+  )
+);
+app.post(
+  '/login',
+  passport.authenticate('local', {
+    successRedirect: '/expense',
+    failureRedirect: '/login',
+    failureFlash: true, // Enable flash messages for failure
+  })
+);
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findByPk(id);
+    done(null, user);
+  } catch (error) {
+    done(error, null);
+  }
+});
+// Set the view engine to EJS
+app.set('view engine', 'ejs');
+app.set('views', './views');
+
+// Middleware
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(methodOverride('_method'));
+
+app.use(express.static('public'));
+// Routes
+app.use('/api', expenseRoutes);
+app.use('/api', userRoutes); 
+User.hasMany(Expense, { onDelete: 'CASCADE' });
+Expense.belongsTo(User);
+// Database synchronization
+sequelize.sync()
+// .then(result => {
+//   return User.findById(1);
+//   // console.log(result);
+// })
+// .then(user => {
+//   if (!user) {
+//     return User.create({ name: 'Max', email: 'test@test.com' });
+//   }
+//   return user;
+// })
+.then(() => {
+  console.log('Database connected');
+
+  // Start the server
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
+}).catch((error) => {
+  console.error('Unable to connect to the database:', error);
+});

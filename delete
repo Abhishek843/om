@@ -1,0 +1,21 @@
+// ... (existing code)
+
+app.delete('/remove-from-cart/:productId', async (req, res) => {
+  try {
+    const productId = req.params.productId;
+    const product = await Product.findById(productId);
+
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    // Add your cart removal logic here (e.g., update user's cart in the database)
+
+    return res.json({ success: true, message: 'Product removed from cart' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// ... (existing code)

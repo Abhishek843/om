@@ -1,0 +1,119 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+
+const app = express();
+const PORT = 3000;
+
+mongoose.connect('your_database_url', { useNewUrlParser: true, useUnifiedTopology: true });
+
+const productSchema = new mongoose.Schema({
+  name: String,
+  price: Number,
+});
+
+const Product = mongoose.model('Product', productSchema);
+
+const userSchema = new mongoose.Schema({
+  name: String,
+  cart: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+});
+
+const User = mongoose.model('User', userSchema);
+
+const orderSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  products: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+  totalPrice: Number,
+  orderDate: { type: Date, default: Date.now },
+});
+
+const Order = mongoose.model('Order', orderSchema);
+
+app.use(bodyParser.json());
+
+app.post('/add-to-cart', async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const productId = req.body.productId;
+
+    const user = await User.findById(userId);
+    const product = await Product.findById(productId);
+
+    if (!user || !product) {
+      return res.status(404).json({ error: 'User or Product not found' });
+    }
+
+    user.cart.push(productId);
+    await user.save();
+
+    return res.json({ success: true, message: 'Product added to cart' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.delete('/remove-from-cart/:productId', async (req, res) => {
+  try {
+    const productId = req.params.productId;
+    const user = await User.findOne({ cart: productId });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.cart.pull(productId);
+    await user.save();
+
+    return res.json({ success: true, message: 'Product removed from cart' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.post('/place-order', async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const user = await User.findById(userId).populate('cart').exec();
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const totalPrice = user.cart.reduce((sum, product) => sum + product.price, 0);
+
+    const newOrder = new Order({
+      user: userId,
+      products: user.cart,
+      totalPrice,
+    });
+
+    await newOrder.save();
+
+    user.cart = [];
+    await user.save();
+
+    return res.json({ success: true, message: 'Order placed successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.get('/user-orders/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const orders = await Order.find({ user: userId }).populate('products').exec();
+
+    return res.json({ success: true, orders });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
